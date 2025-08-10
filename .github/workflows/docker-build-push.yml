@@ -9,8 +9,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  # Required by sigstore
-  id-token: write
+  contents: read
+  packages: write # OK!
+  id-token: write   # OK!
 
 jobs:
   build:
@@ -25,34 +26,58 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "${GITHUB_ENV}"
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+      
+      # ===== 1. PRIMA MODIFICA QUI =====
       - uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
         id: meta
         with:
-          images: ${{ github.repository_owner }}/${{ env.IMAGE }}
+          # Aggiungiamo il registry di GitHub (ghcr.io)
+          images: |
+            ${{ github.repository_owner }}/${{ env.IMAGE }}
+            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE }}
           tags: |
             type=schedule
             type=ref,event=branch
             type=ref,event=pr
             type=sha
+            
       - name: Test the Docker image
         working-directory: ${{ env.IMAGE }}
         shell: bash
         run: docker compose -f docker-compose.test.yml run sut
-      - uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        
+      # ===== 2. SECONDA MODIFICA QUI =====
+      # Lo step di login a Docker Hub rimane com'è
+      - name: Login to Docker Hub
         if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Aggiungiamo un nuovo step per il login a GitHub Packages
+      - name: Login to GitHub Container Registry
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      # Da qui in poi non serve modificare altro
       - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         id: build
         with:
           context: ${{ env.IMAGE }}
           platforms: linux/amd64,linux/arm64
           pull: true
+          # La condizione 'push' è corretta, farà il push a entrambi i registry a cui si è loggato
           push: ${{ github.ref == 'refs/heads/main' }}
           sbom: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          
+      # ...tutto il resto del file rimane invariato...
       - name: Install cosign
         if: github.ref == 'refs/heads/main'
         uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
