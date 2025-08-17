@@ -14,7 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN TEXLIVE_MIRROR=http://mirror.ctan.org/systems/texlive/tlnet && \
+RUN echo "selected_scheme scheme-basic" > /tmp/texlive.profile && \
+    TEXLIVE_MIRROR=http://mirror.ctan.org/systems/texlive/tlnet && \
     TEXLIVE_INSTALLER=install-tl-unx.tar.gz && \
     wget -O /tmp/$TEXLIVE_INSTALLER $TEXLIVE_MIRROR/$TEXLIVE_INSTALLER && \
     mkdir /tmp/texlive && \
