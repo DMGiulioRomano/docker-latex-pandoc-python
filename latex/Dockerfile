@@ -23,7 +23,7 @@ RUN echo "selected_scheme scheme-basic" > /tmp/texlive.profile && \
     /tmp/texlive/install-tl -profile /tmp/texlive.profile && \
     rm -rf /tmp/texlive /tmp/$TEXLIVE_INSTALLER
 
-ENV PATH="/usr/local/texlive/2023/bin/x86_64-linux:${PATH}"
+ENV PATH="/usr/local/texlive/2025/bin/x86_64-linux:${PATH}"
 RUN tlmgr update --self && \
     tlmgr install \
         collection-basic \
@@ -64,6 +64,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip3 install --no-cache-dir --upgrade pip && \
     pip3 install --no-cache-dir PyYAML liquidpy
 
-ENV PATH $PATH:/usr/local/texlive/2023/bin/x86_64-linux
+ENV PATH $PATH:/usr/local/texlive/2025/bin/x86_64-linux
 WORKDIR /data
 VOLUME ["/data"]
