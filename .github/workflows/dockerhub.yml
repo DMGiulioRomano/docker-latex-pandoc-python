@@ -29,13 +29,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Pull the ${{ matrix.tag }} ${{ matrix.platform }} image
         shell: bash
-        run: docker pull --platform "${{ matrix.platform }}" "${GITHUB_REPOSITORY_OWNER}/${IMAGE}:${{ matrix.tag }}"
+        run: docker pull --platform "${{ matrix.platform }}" "${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE}:${{ matrix.tag }}"
       - name: Pull the ${{ matrix.tag }} ${{ matrix.platform }} image SBOM
         shell: bash
-        run: docker buildx imagetools inspect "${GITHUB_REPOSITORY_OWNER}/${IMAGE}:${{ matrix.tag }}" --format "{{ json (index .SBOM \"${{ matrix.platform }}\").SPDX }}"
+        run: docker buildx imagetools inspect "${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE}:${{ matrix.tag }}" --format "{{ json (index .SBOM \"${{ matrix.platform }}\").SPDX }}"
       - name: Install cosign
         uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - name: Verify the ${{ matrix.tag }} image signature
         shell: bash
         run: |
-          cosign verify "${GITHUB_REPOSITORY_OWNER}/${IMAGE}:${{ matrix.tag }}" --certificate-identity-regexp "https://github\.com/${GITHUB_REPOSITORY}/\.github/workflows/.+" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          cosign verify "${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE}:${{ matrix.tag }}" --certificate-identity-regexp "https://github\.com/${GITHUB_REPOSITORY}/\.github/workflows/.+" --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
