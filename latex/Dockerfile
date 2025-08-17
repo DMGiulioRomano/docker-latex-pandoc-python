@@ -22,6 +22,7 @@ RUN TEXLIVE_MIRROR=http://mirror.ctan.org/systems/texlive/tlnet && \
     /tmp/texlive/install-tl -profile /tmp/texlive.profile && \
     rm -rf /tmp/texlive /tmp/$TEXLIVE_INSTALLER
 
+ENV PATH="/usr/local/texlive/2023/bin/x86_64-linux:${PATH}"
 RUN tlmgr update --self && \
     tlmgr install \
         collection-basic \
